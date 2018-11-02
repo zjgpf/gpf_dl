@@ -63,22 +63,23 @@ class DataSet:
 
 
 class TextDataSet(DataSet):
-    def make_batches(self, X, y, batch_size = 64, is_shuffle = True, is_drop_last = True):
+    def make_batches(self, X, y, bs = 64, is_shuffle = True, is_drop_last = True):
         pdb.set_trace()
         if is_shuffle:
             X,y = shuffle(X,y)
         length = len(y)
-        num_of_batches = int(length/batch_size)
-        print(f'Making batches... batch_size: {batch_size},num of batchese: {num_of_batches}')
-        start,end,ret_X,ret_y = 0,batch_size,[],[]
+        num_of_batches = int(length/bs)
+        last_batch = not is_drop_last and length%batch_size
+        print(f'Making batches... batch size: {bs},num of batchese: {num_of_batches}')
+        start,end,= 0,bs
 
         for i in range(num_of_batches):
             ret_X = X[start:end]
             ret_y = y[start:end]
             padding(ret_X)
             yield tensor(ret_X),tensor(ret_y)
-            start+=batch_size
-            end+=batch_size
+            start+=bs
+            end+=bs
         
         if not is_drop_last and length%batch_size:
             yield tensor(X[start:],y[start:])

@@ -28,12 +28,11 @@ def test_padding():
     print(padding(x)) 
 
 def test_TextDataSet():
-    pdb.set_trace()
     label_index = {'办公费':0,'业务招待费':1,'福利费':2,'差旅费':3}
     tds = ds.TextDataSet()
     x = df.x.apply(ds.transform_x)
     y = ds.index_labels(df.y1,label_index)
-    tds.make_batches(x,y)
+    dl = tds.make_batches(x,y)
 
 test_TextDataSet()
     
