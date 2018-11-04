@@ -20,11 +20,9 @@ def sd2ud(labels):
     print(f"min category: {min_category}, num: {min_num}")
     new_indices = np.array([])
     for item in category_indices:
-        category,indices = item[0],item[1]
-        origin_len = len(indices)
-        prob = min_num/origin_len
-        mask = np.random.binomial(n=1,p=prob,size=origin_len)==1
-        indices = np.array([indices[i] for i in range(origin_len) if mask[i]])
+        category,indices,origin_len = item[0],item[1],len(item[1])
+        mask = np.random.binomial(n=1,p=min_num/origin_len,size=origin_len)==1
+        indices = indices[mask]
         print(f'category: {category}, origin_len: {origin_len}, new_len: {len(indices)}')
         new_indices = np.hstack([new_indices,indices])
     return new_indices

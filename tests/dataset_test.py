@@ -34,5 +34,5 @@ def test_TextDataSet():
     y = ds.index_labels(df.y1,label_index)
     dl = tds.make_batches(x,y)
 
-test_TextDataSet()
+test_sd2ud()
     
