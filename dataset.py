@@ -25,7 +25,7 @@ def sd2ud(labels):
         indices = indices[mask]
         print(f'category: {category}, origin_len: {origin_len}, new_len: {len(indices)}')
         new_indices = np.hstack([new_indices,indices])
-    return new_indices
+    return new_indices.astype(int)
 
 def str2arr(x):
     '''
@@ -53,9 +53,7 @@ def index_labels(labels,label_index):
 
 class DataSet:
     def __init__(self, *args, **kwargs):
-        self.trn_ds = None
-        self.val_ds = None
-        self.test_ds = None
+        self.dl = None
         if 'label_index' in kwargs:
             self.label_index = kwargs[label_index]
             self.index_label = {v:k for k,v in self.label_index.item()}
@@ -84,7 +82,12 @@ class TextDataSet(DataSet):
             padding(ret_X)
             yield tensor(ret_X),tensor(ret_y)
 
-    def classification_data_from_np(self,X,y):
+    def make_batches_ud(self,X,y,bs=64,drop_last=False,epoch=3):
+        for _ in range(epoch):
+            mask = sd2ud(y)
+            X_local,y_local = X[mask],y[mask]
+            yield self.make_batches(X_local,y_local,bs=bs,drop_last=drop_last)
+        
     
 #class ImageDataSet(DataSet):
     #def classfication_from_path(self, path, bs=64, trn_name = 'train', val_name = 'valid', test_name = 'test'):

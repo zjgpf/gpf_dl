@@ -27,14 +27,25 @@ def test_padding():
     x = [[1,2,3],[2,3],[1,2,3,4]]
     print(padding(x)) 
 
-def test_TextDataSet():
+def test_make_batches():
     label_index = {'办公费':0,'业务招待费':1,'福利费':2,'差旅费':3}
     tds = ds.TextDataSet()
     x = df.x.apply(ds.str2arr)
     y = ds.index_labels(df.y1,label_index)
-    #pdb.set_trace()
     dl = tds.make_batches(x,y)
     for v in dl:
         print(v[0].shape)
-test_TextDataSet()
+
+def test_make_batches_ud():
+    label_index = {'办公费':0,'业务招待费':1,'福利费':2,'差旅费':3}
+    tds = ds.TextDataSet()
+    x = df.x.apply(ds.str2arr)
+    y = ds.index_labels(df.y1,label_index)
+    dl = tds.make_batches_ud(x,y)
+    for i,v in enumerate(dl):
+        print('generator i:',i)
+        for a in v:
+            print(a[0].shape)
+
+test_make_batches_ud()
     
