@@ -27,7 +27,7 @@ def sd2ud(labels):
         new_indices = np.hstack([new_indices,indices])
     return new_indices
 
-def transform_x(x):
+def str2arr(x):
     '''
     '[1,2,3]' to [1,2,3]
     '''
@@ -50,6 +50,7 @@ def padding(X):
 def index_labels(labels,label_index):
     return np.array([label_index[v] for v in labels])
 
+
 class DataSet:
     def __init__(self, *args, **kwargs):
         self.trn_ds = None
@@ -61,14 +62,12 @@ class DataSet:
 
 
 class TextDataSet(DataSet):
-    def make_batches(self, X, y, bs = 64, is_shuffle = True, is_drop_last = True):
-        pdb.set_trace()
+    def make_batches(self, X, y, bs = 64, is_shuffle = True, drop_last = False):
         if is_shuffle:
             X,y = shuffle(X,y)
-        length = len(y)
-        num_of_batches = int(length/bs)
-        last_batch = not is_drop_last and length%batch_size
-        print(f'Making batches... batch size: {bs},num of batchese: {num_of_batches}')
+        last_batch = not drop_last and bool(len(y)%bs)
+        num_of_batches = int(len(y)/bs)
+        print(f'Making batches... batch size: {bs},num of batchese: {num_of_batches+1 if last_batch else num_of_batches}')
         start,end,= 0,bs
 
         for i in range(num_of_batches):
@@ -79,8 +78,13 @@ class TextDataSet(DataSet):
             start+=bs
             end+=bs
         
-        if not is_drop_last and length%batch_size:
-            yield tensor(X[start:],y[start:])
+        if last_batch:
+            ret_X = X[start:]
+            ret_y = y[start:]
+            padding(ret_X)
+            yield tensor(ret_X),tensor(ret_y)
+
+    def classification_data_from_np(self,X,y):
     
 #class ImageDataSet(DataSet):
     #def classfication_from_path(self, path, bs=64, trn_name = 'train', val_name = 'valid', test_name = 'test'):
