@@ -66,6 +66,9 @@ def test_fit():
     loss_fn = F.nll_loss
 
     core.fit(m, X,y,3, opt, loss_fn)
+
+def test_predict_batch():
+    
     
 
 test_fit()

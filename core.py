@@ -119,3 +119,21 @@ def fit(m,X,y, epochs, opt, loss_fn,uds=3):
                 total_loss += loss.item()
             print(f'Epoch: {epoch} Generator: {i}, total loss: {total_loss}')
     save_model(m)
+
+def predict_batch(m,X, bs = 512 ):
+    X += [X[-1]]*(bs - len(X)%bs)
+    num_of_batches = len(X)//bs
+
+    start,end,device,pred = 0,bs,m.get_device(),[]
+
+    for _ in range(num_of_batches):
+        batch = padding(X[start:end])
+        batch = tensor(batch, requires_grad=False).to(device)
+        predict =  m(batch.transpose(0,1))
+        predict = torch.argmax(predict, dim=-1)
+        pred.extend(predict.tolist())
+        start+=bs
+        end +=bs
+
+    pred = pred[:-offset]
+    return pred
