@@ -121,6 +121,7 @@ def fit_text_classification(m,X,y, epochs, opt, loss_fn,uds=3):
     save_model(m)
 
 def predict_batch(m,X, bs = 512 ):
+    m.eval()
     offset = bs - len(X)%bs
     X += [X[-1]]*offset
     num_of_batches = len(X)//bs

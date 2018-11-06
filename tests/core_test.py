@@ -58,8 +58,8 @@ def test_fit_text_classification():
     n_hidden = 128
     n_out = 4
 
-    #m = model.SimpleGRU(vocal_size,embedding_dim,n_hidden,n_out).to(torch.device('cuda:0'))
-    m=core.load_model()
+    m = model.SimpleGRU(vocal_size,embedding_dim,n_hidden,n_out).to(torch.device('cuda:0'))
+    #m=core.load_model()
     m.to(torch.device('cuda:0'))
     X = df.x.apply(core.str2arr)
     y = core.index_labels(df.y1,label_index)
@@ -71,7 +71,6 @@ def test_fit_text_classification():
 
 def test_predict_batch():
     m=core.load_model().to(torch.device('cuda:0'))
-    m.eval()
     X = list(df_test.x.apply(core.str2arr))
     print(len(X))
     pred = core.predict_batch(m,X)
@@ -86,5 +85,5 @@ def test_evaluation_matrix():
     core.evaluation_matrix(pred, expect)
     
 
-test_evaluation_matrix()
+test_fit_text_classification()
     

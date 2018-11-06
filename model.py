@@ -16,8 +16,8 @@ class SimpleGRU(nn.Module):
         embs = self.emb(seq)
         gru_out, self.h = self.gru(embs, self.h)
 
-        outp = self.out(self.h[-1]) # self.h[-1] contains hidden state of last timestep
-        return F.log_softmax(outp, dim=-1)
+        outp = self.out(self.h) 
+        return torch.squeeze(F.log_softmax(outp, dim=-1),0)
     
     def init_hidden(self, batch_size):
         return torch.zeros((1,batch_size,self.n_hidden)).to(self.get_device())
