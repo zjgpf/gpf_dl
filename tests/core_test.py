@@ -11,8 +11,11 @@ import numpy as np
 import pdb
 
 
-df = pd.read_csv('dataset_test.csv')
+df = pd.read_csv('dataset_train.csv')
+df_test = pd.read_csv('dataset_test.csv')
 word_index, index_word = core.get_word_index('word_dict.pickle')
+label_index = {'办公费':0,'业务招待费':1,'福利费':2,'差旅费':3}
+index_label = {v:k for k,v in label_index.items()}
 
 def test_sd2ud():
     print(core.sd2ud(df.y1)[:10])
@@ -34,7 +37,6 @@ def test_padding():
     print(padding(x)) 
 
 def test_make_batches():
-    label_index = {'办公费':0,'业务招待费':1,'福利费':2,'差旅费':3}
     x = df.x.apply(core.str2arr)
     y = core.index_labels(df.y1,label_index)
     dl = core.make_batches(x,y)
@@ -42,7 +44,6 @@ def test_make_batches():
         print(v[0].shape)
 
 def test_make_batches_ud():
-    label_index = {'办公费':0,'业务招待费':1,'福利费':2,'差旅费':3}
     x = df.x.apply(core.str2arr)
     y = core.index_labels(df.y1,label_index)
     dl = core.make_batches_ud(x,y)
@@ -51,25 +52,39 @@ def test_make_batches_ud():
         for a in v:
             print(a[0].shape)
 
-def test_fit():
+def test_fit_text_classification():
     vocal_size = len(word_index)
     embedding_dim = 7
     n_hidden = 128
     n_out = 4
 
-    m = model.SimpleGRU(vocal_size,embedding_dim,n_hidden,n_out).to(torch.device('cuda:0'))
-    label_index = {'办公费':0,'业务招待费':1,'福利费':2,'差旅费':3}
+    #m = model.SimpleGRU(vocal_size,embedding_dim,n_hidden,n_out).to(torch.device('cuda:0'))
+    m=core.load_model()
+    m.to(torch.device('cuda:0'))
     X = df.x.apply(core.str2arr)
     y = core.index_labels(df.y1,label_index)
 
-    opt = optim.SGD(m.parameters(), lr=0.3, momentum=0.5)
+    opt = optim.SGD(m.parameters(), lr=0.01, momentum=0.9)
     loss_fn = F.nll_loss
 
-    core.fit(m, X,y,3, opt, loss_fn)
+    core.fit_text_classification(m, X,y,3, opt, loss_fn)
 
 def test_predict_batch():
-    
+    m=core.load_model().to(torch.device('cuda:0'))
+    m.eval()
+    X = list(df_test.x.apply(core.str2arr))
+    print(len(X))
+    pred = core.predict_batch(m,X)
+    print(len(pred))
+    print(pred[:3])
+    return pred
+
+def test_evaluation_matrix():
+    pred = test_predict_batch()
+    pred = np.array([index_label[i] for i in pred])
+    expect = df_test.y1.values
+    core.evaluation_matrix(pred, expect)
     
 
-test_fit()
+test_evaluation_matrix()
     

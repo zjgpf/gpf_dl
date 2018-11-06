@@ -102,7 +102,7 @@ def load_model(path = 'tmp_torch_model.torch'):
     print(f'loading model from {os.path.realpath(path)}')
     return torch.load(path)
 
-def fit(m,X,y, epochs, opt, loss_fn,uds=3):
+def fit_text_classification(m,X,y, epochs, opt, loss_fn,uds=3):
     m.train()
     device = m.get_device()
     print(f'model is been trained on {device}')
@@ -121,7 +121,8 @@ def fit(m,X,y, epochs, opt, loss_fn,uds=3):
     save_model(m)
 
 def predict_batch(m,X, bs = 512 ):
-    X += [X[-1]]*(bs - len(X)%bs)
+    offset = bs - len(X)%bs
+    X += [X[-1]]*offset
     num_of_batches = len(X)//bs
 
     start,end,device,pred = 0,bs,m.get_device(),[]
@@ -135,5 +136,24 @@ def predict_batch(m,X, bs = 512 ):
         start+=bs
         end +=bs
 
-    pred = pred[:-offset]
-    return pred
+    return pred[:-offset]
+
+def evaluation_matrix(predicts, expects):        
+    assert(len(predicts)==len(expects))
+    expect_set = np.unique(expects)
+    correct_all = 0
+    for category in expect_set:
+        expects_indices = set(np.where(expects == category)[0])
+        predicts_indices = set(np.where(predicts == category)[0])
+        print(f"---------------------------{category}-------------------------------")
+        print(f"total: ", len(expects_indices))
+        total_correct = 0
+        for i in predicts_indices:
+            if i in expects_indices: 
+                total_correct+=1
+                correct_all+=1
+        print("correct: ", total_correct)
+        print("accuracy: ", total_correct/len(expects_indices))
+    print("---------------------------All-------------------------------")
+    print(f'total correct/total:{correct_all}/{len(expects)}')
+    print('total accuracy: ', correct_all/len(expects))
