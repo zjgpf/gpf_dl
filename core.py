@@ -96,11 +96,11 @@ def get_word_index(word_dict_path):
 
 def save_model(m,path = 'tmp_torch_model.torch'):
     print(f'Saving model to {os.path.realpath(path)}')
-    torch.save(m,path)
+    torch.save(m.state_dict(),path)
 
-def load_model(path = 'tmp_torch_model.torch'):
+def load_model(m,path = 'tmp_torch_model.torch'):
     print(f'loading model from {os.path.realpath(path)}')
-    return torch.load(path)
+    m.load_state_dict(torch.load(path))
 
 def fit_text_classification(m,X,y, epochs, opt, loss_fn,uds=3):
     m.train()
