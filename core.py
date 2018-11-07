@@ -6,6 +6,7 @@ import pandas as pd
 import copy
 import torch
 from torch import tensor
+import cv2
 import pdb
 from tqdm import tqdm
 
@@ -120,7 +121,7 @@ def fit_text_classification(m,X,y, epochs, opt, loss_fn,uds=3):
             print(f'Epoch: {epoch} Generator: {i}, total loss: {total_loss}')
     save_model(m)
 
-def predict_batch(m,X, bs = 512 ):
+def predict_batch_text_classification(m,X, bs = 512 ):
     m.eval()
     offset = bs - len(X)%bs
     X += [X[-1]]*offset
@@ -158,3 +159,109 @@ def evaluation_matrix(predicts, expects):
     print("---------------------------All-------------------------------")
     print(f'total correct/total:{correct_all}/{len(expects)}')
     print('total accuracy: ', correct_all/len(expects))
+
+
+def get_img_path_label_from_path(root_path, label_index):
+    ret = []
+    label_counts = {k:0 for k in label_index}
+    for img in os.listdir(root_path):
+        if not (img.endswith('.png') or img.endswith('.jpg')): continue
+        label = img.split('_')[1][:-4]
+        path = os.path.abspath(os.path.join(root_path,img))
+        ret += [[path,label_index[label]]]
+        label_counts[label]+=1
+    for k,v in label_counts.items(): print(k+":"+str(v))
+    return ret 
+
+def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, drop_last = False):
+    if is_shuffle:
+        img_paths,labels = shuffle(img_paths, labels)
+        labels = np.array(labels).astype(int)
+    
+    last_batch = not drop_last and bool(len(labels)%bs)
+    num_of_batches = int(len(labels)/bs)
+    print(f'Making batches... batch size: {bs},num of batchese: {num_of_batches+1 if last_batch else num_of_batches}')
+    start,end,= 0,bs
+
+    for i in range(num_of_batches):
+        paths = img_paths[start:end]
+        imgs = []
+        for path in paths:
+            imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
+        imgs = np.array(imgs)/255
+        labels_local = labels[start:end]
+        yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+        start+=bs
+        end+=bs
+    
+    if last_batch:
+        paths = img_paths[start:]
+        labels_local = img_paths[start:]
+        imgs = []
+        for path in paths:
+            imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
+        labels_local = labels[start:end]
+        yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+
+class dl_img:
+   
+    def __init__(self, img_paths, labels, bs = 32, sz = 32, is_shuffle = True, drop_last = False):
+        self.img_paths,self.labels,self.bs,self.sz,self.is_shuffle,self.drop_last = img_paths,labels,bs,sz,is_shuffle,drop_last
+        
+    def __iter__(self):
+        img_paths,labels,bs,sz,is_shuffle,drop_last = self.img_paths,self.labels,self.bs,self.sz,self.is_shuffle,self.drop_last 
+        if is_shuffle:
+            img_paths,labels = shuffle(img_paths, labels)
+            labels = np.array(labels).astype(int)
+        
+        last_batch = not drop_last and bool(len(labels)%bs)
+        num_of_batches = int(len(labels)/bs)
+        print(f'Making batches... batch size: {bs},num of batchese: {num_of_batches+1 if last_batch else num_of_batches}')
+        start,end,= 0,bs
+
+        for i in range(num_of_batches):
+            paths = img_paths[start:end]
+            imgs = []
+            for path in paths:
+                imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
+            imgs = np.array(imgs)/255
+            labels_local = labels[start:end]
+            yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+            start+=bs
+            end+=bs
+        
+        if last_batch:
+            paths = img_paths[start:]
+            labels_local = img_paths[start:]
+            imgs = []
+            for path in paths:
+                imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
+            labels_local = labels[start:end]
+            yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+
+def fit(m,data, epochs, opt, loss_fn):
+    m.train()
+    device = m.get_device()
+    print(f'model is been trained on {device}')
+    for epoch in tqdm(range(epochs)):
+        total_loss = 0
+        for batch_X, batch_y in data:
+            opt.zero_grad()
+            predict = m(batch_X.to(device))
+            loss = loss_fn(predict, batch_y.to(device))
+            loss.backward()
+            opt.step()
+            total_loss += loss.item()
+        print(f'Epoch: {epoch}, total loss: {total_loss}')
+    save_model(m)
+
+def predict_batch_img(m,X, bs = 64 ):
+    m.eval()
+    device,pred = m.get_device(),[]
+    for batch in X:
+        batch = tensor(batch, requires_grad=False).to(device)
+        predict =  m(batch)
+        predict = torch.argmax(predict, dim=-1)
+        pred.extend(predict.tolist())
+
+    return pred 

@@ -69,21 +69,36 @@ def test_fit_text_classification():
 
     core.fit_text_classification(m, X,y,3, opt, loss_fn)
 
-def test_predict_batch():
-    m=core.load_model().to(torch.device('cuda:0'))
+def test_predict_batch_text_classification():
+    m = model.SimpleGRU(vocal_size,embedding_dim,n_hidden,n_out).to(torch.device('cuda:0'))
+    m=core.load_model(m)
     X = list(df_test.x.apply(core.str2arr))
     print(len(X))
-    pred = core.predict_batch(m,X)
+    pred = core.predict_batch_text_classification(m,X)
     print(len(pred))
     print(pred[:3])
     return pred
 
 def test_evaluation_matrix():
-    pred = test_predict_batch()
+    pred = test_predict_batch_text_classification()
     pred = np.array([index_label[i] for i in pred])
     expect = df_test.y1.values
     core.evaluation_matrix(pred, expect)
     
 
-test_fit_text_classification()
-    
+def test_get_img_path_label_from_path():
+    label_index_img_c = {'frog':0,'truck':1,'deer':2,'automobile':3,'bird':4,'horse':5,'ship':6,'cat':7,'airplane':8,'dog':9} 
+    ret = core.get_img_path_label_from_path('/data/gpf/tutorial/dl/cnn/cifar/train',label_index_img_c)
+    print(len(ret))
+    print(ret[:3])
+    return ret
+
+def test_make_batches_img():
+    imgPath_label = test_get_img_path_label_from_path()
+    img_paths, labels = zip(*imgPath_label)
+    dl = core.make_batches_img(np.array(img_paths), np.array(labels).astype(int),bs=64,sz=16)
+    for v in dl:
+        print(v[0].shape)
+
+
+test_make_batches_img()
