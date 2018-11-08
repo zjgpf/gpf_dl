@@ -63,5 +63,5 @@ def img_generator(num_of_imgs, length, output_dir='./tmp_img/', noise_sigma=0.15
         scipy.misc.imsave(os.path.join(output_dir,img_name), digit_imgs_comb)
        
 if __name__ == '__main__':
-    img_generator(100,12)
+    img_generator(10000,12)
     

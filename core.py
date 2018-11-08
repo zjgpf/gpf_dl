@@ -173,7 +173,7 @@ def get_img_path_label_from_path(root_path, label_index):
     for k,v in label_counts.items(): print(k+":"+str(v))
     return ret 
 
-def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, drop_last = False):
+def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, drop_last = False, stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))):
     if is_shuffle:
         img_paths,labels = shuffle(img_paths, labels)
         labels = np.array(labels).astype(int)
@@ -188,7 +188,7 @@ def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, dro
         imgs = []
         for path in paths:
             imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
-        imgs = np.array(imgs)/255
+        imgs = normalize(np.array(imgs)/255,*stats)
         labels_local = labels[start:end]
         yield tensor(imgs,dtype=torch.float),tensor(labels_local)
         start+=bs
@@ -200,16 +200,20 @@ def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, dro
         imgs = []
         for path in paths:
             imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
+        imgs = normalize(np.array(imgs)/255,*stats)
         labels_local = labels[start:end]
         yield tensor(imgs,dtype=torch.float),tensor(labels_local)
 
+def normalize(x,m,s):
+    return (x-m)/s
+    
 class dl_img:
    
-    def __init__(self, img_paths, labels, bs = 32, sz = 32, is_shuffle = True, drop_last = False):
-        self.img_paths,self.labels,self.bs,self.sz,self.is_shuffle,self.drop_last = img_paths,labels,bs,sz,is_shuffle,drop_last
+    def __init__(self, img_paths, labels, bs = 32, sz = 32, is_shuffle = True, drop_last = False,stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))):
+        self.img_paths,self.labels,self.bs,self.sz,self.is_shuffle,self.drop_last,self.stats = img_paths,labels,bs,sz,is_shuffle,drop_last,stats
         
     def __iter__(self):
-        img_paths,labels,bs,sz,is_shuffle,drop_last = self.img_paths,self.labels,self.bs,self.sz,self.is_shuffle,self.drop_last 
+        img_paths,labels,bs,sz,is_shuffle,drop_last,stats = self.img_paths,self.labels,self.bs,self.sz,self.is_shuffle,self.drop_last,self.stats
         if is_shuffle:
             img_paths,labels = shuffle(img_paths, labels)
             labels = np.array(labels).astype(int)
@@ -224,7 +228,7 @@ class dl_img:
             imgs = []
             for path in paths:
                 imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
-            imgs = np.array(imgs)/255
+            imgs = normalize(np.array(imgs)/255,*stats)
             labels_local = labels[start:end]
             yield tensor(imgs,dtype=torch.float),tensor(labels_local)
             start+=bs
@@ -236,6 +240,7 @@ class dl_img:
             imgs = []
             for path in paths:
                 imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
+            imgs = normalize(np.array(imgs)/255,*stats)
             labels_local = labels[start:end]
             yield tensor(imgs,dtype=torch.float),tensor(labels_local)
 
