@@ -190,7 +190,7 @@ def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, dro
             imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
         imgs = normalize(np.array(imgs)/255,*stats)
         labels_local = labels[start:end]
-        yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+        yield tensor(imgs,dtype=torch.float).permute(0,3,1,2),tensor(labels_local)
         start+=bs
         end+=bs
     
@@ -202,7 +202,7 @@ def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, dro
             imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
         imgs = normalize(np.array(imgs)/255,*stats)
         labels_local = labels[start:end]
-        yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+        yield tensor(imgs,dtype=torch.float).permute(0,3,1,2),tensor(labels_local)
 
 def normalize(x,m,s):
     return (x-m)/s
@@ -230,7 +230,7 @@ class dl_img:
                 imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
             imgs = normalize(np.array(imgs)/255,*stats)
             labels_local = labels[start:end]
-            yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+            yield tensor(imgs,dtype=torch.float).permute(0,3,1,2),tensor(labels_local)
             start+=bs
             end+=bs
         
@@ -242,7 +242,7 @@ class dl_img:
                 imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
             imgs = normalize(np.array(imgs)/255,*stats)
             labels_local = labels[start:end]
-            yield tensor(imgs,dtype=torch.float),tensor(labels_local)
+            yield tensor(imgs,dtype=torch.float).permute(0,3,1,2),tensor(labels_local)
 
 def fit(m,data, epochs, opt, loss_fn):
     m.train()

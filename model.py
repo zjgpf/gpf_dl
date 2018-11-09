@@ -28,3 +28,43 @@ class SimpleGRU(nn.Module):
         device_index = p.device.index
         ret = device_type + ':' + str(device_index) if device_type == 'cuda' else device_type
         return torch.device(ret)
+
+class SimpleNet(nn.Module):
+    
+    def __init__(self, layers):
+        super().__init__()
+        self.layers = nn.ModuleList([nn.Linear(layers[i],layers[i+1]) for i in range(len(layers)-1)])
+        
+    def forward(self, seq):
+        bs = seq.size()[0]
+        X = seq.view(bs,-1)
+        for layer in self.layers:
+            X = F.relu(layer(X))
+        return F.log_softmax(X,dim=-1)
+    
+    def get_device(self):
+        p = next(self.parameters())
+        device_type = str(p.device.type)
+        device_index = p.device.index
+        ret = device_type + ':' + str(device_index) if device_type == 'cuda' else device_type
+        return torch.device(ret)  
+
+class ConvNet(nn.Module):
+    def __init__(self, layers, c):
+        super().__init__()
+        self.convlayers = nn.ModuleList([nn.Conv2d(layers[i],layers[i+1],kernel_size=3,stride=2) for i in range(len(layers)-1)])
+        self.pool = nn.AdaptiveMaxPool2d(1)
+        self.output = nn.Linear(layers[-1],c)
+    
+    def forward(self, x):
+        for layer in self.convlayers: x = F.relu(layer(x))
+        x = self.pool(x)
+        x = x.view(x.size()[0],-1)
+        return F.log_softmax(self.output(x), dim=-1)
+    
+    def get_device(self):
+        p = next(self.parameters())
+        device_type = str(p.device.type)
+        device_index = p.device.index
+        ret = device_type + ':' + str(device_index) if device_type == 'cuda' else device_type
+        return torch.device(ret)
