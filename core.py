@@ -173,6 +173,15 @@ def get_img_path_label_from_path(root_path, label_index):
     for k,v in label_counts.items(): print(k+":"+str(v))
     return ret 
 
+def get_img_path_seq_from_path(root_path):
+    ret = []
+    for img in os.listdir(root_path):
+        if not (img.endswith('.png') or img.endswith('.jpg')): continue
+        seq = img.split('_')[0]
+        path = os.path.abspath(os.path.join(root_path,img))
+        ret += [[path,seq]]
+    return ret 
+
 def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, drop_last = False, stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))):
     if is_shuffle:
         img_paths,labels = shuffle(img_paths, labels)
@@ -201,6 +210,36 @@ def make_batches_img(img_paths, labels, bs = 32, sz = 32, is_shuffle = True, dro
         for path in paths:
             imgs += [cv2.resize(cv2.imread(path), (sz,sz))]
         imgs = normalize(np.array(imgs)/255,*stats)
+        labels_local = labels[start:end]
+        yield tensor(imgs,dtype=torch.float).permute(0,3,1,2),tensor(labels_local)
+
+
+def make_batches_img_seq(img_paths, labels, sz, bs = 32, is_shuffle = True, drop_last = False):
+    if is_shuffle:
+        img_paths,labels = shuffle(img_paths, labels)
+        labels = np.array(labels).astype(int)
+    
+    last_batch = not drop_last and bool(len(labels)%bs)
+    num_of_batches = int(len(labels)/bs)
+    print(f'Making batches... batch size: {bs},num of batchese: {num_of_batches+1 if last_batch else num_of_batches}')
+    start,end,= 0,bs
+
+    for i in range(num_of_batches):
+        paths = img_paths[start:end]
+        imgs = []
+        for path in paths:
+            imgs += [cv2.resize(cv2.imread(path),(sz[0],sz[1]))]
+        labels_local = labels[start:end]
+        yield tensor(imgs,dtype=torch.float).permute(0,3,1,2),tensor(labels_local)
+        start+=bs
+        end+=bs
+    
+    if last_batch:
+        paths = img_paths[start:]
+        labels_local = img_paths[start:]
+        imgs = []
+        for path in paths:
+            imgs += [cv2.imread(path)]
         labels_local = labels[start:end]
         yield tensor(imgs,dtype=torch.float).permute(0,3,1,2),tensor(labels_local)
 
